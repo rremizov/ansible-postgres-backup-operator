@@ -1,0 +1,3 @@
+{% for cluster in postgres_backup_operator_clusters %}
+{{ cluster.host }}:{{ cluster.port }}:*:{{ cluster.username }}:{{ cluster.password }}
+{% endfor %}

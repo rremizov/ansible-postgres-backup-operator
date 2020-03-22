@@ -1,0 +1,99 @@
+---
+- name: Install packages
+  apt:
+    name: "{{ packages }}"
+    update_cache: true
+  vars:
+    packages:
+      - borgbackup
+      - moreutils # chronic
+      - postgresql # pg_basebackup
+
+- name: Create group
+  group:
+    name: "{{ postgres_backup_operator_username }}"
+
+- name: Create user
+  user:
+    name: "{{ postgres_backup_operator_username }}"
+    group: "{{ postgres_backup_operator_username }}"
+    password: "*"
+    update_password: on_create
+    shell: /bin/bash
+
+- name: Save credentials in ~/.pgpass
+  template:
+    src: pgpass.j2
+    dest: ~{{ postgres_backup_operator_username }}/.pgpass
+    owner: "{{ postgres_backup_operator_username }}"
+    group: "{{ postgres_backup_operator_username }}"
+    mode: "0600"
+
+- name: Check if borg repositories exist
+  stat:
+    path: "{{ item.borg_repository }}"
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.borg_repository }}"
+  register: repositories_stat
+
+- name: Create directories for the absent borg repositories
+  file:
+    path: "{{ item.item.borg_repository }}"
+    state: directory
+    owner: "{{ postgres_backup_operator_username }}"
+    group: root
+    mode: "0750"
+  when: not item.stat.exists
+  with_items: "{{ repositories_stat.results }}"
+  loop_control:
+    label: "{{ item.item.borg_repository }}"
+
+- name: Create absent borg repositories
+  shell: >
+    BORG_PASSPHRASE={{ item.item.borg_passphrase }}
+    borg init --encryption repokey {{ item.item.borg_repository }}
+  when: not item.stat.exists
+  with_items: "{{ repositories_stat.results }}"
+  loop_control:
+    label: "{{ item.item.borg_repository }}"
+
+- name: Fix permissions of the created repositories
+  shell: |
+    chown -R {{ postgres_backup_operator_username }}:{{ postgres_backup_operator_username }} {{ item.item.borg_repository }}
+    find {{ item.item.borg_repository }} -type d -print0 | xargs -0 chmod 770
+    find {{ item.item.borg_repository }} -type f -print0 | xargs -0 chmod 660
+  when: not item.stat.exists
+  with_items: "{{ repositories_stat.results }}"
+  loop_control:
+    label: "{{ item.item.borg_repository }}"
+
+- name: Create ~/bin directory
+  file:
+    path: "~{{ postgres_backup_operator_username }}/bin"
+    state: directory
+
+- name: Install backup scripts
+  template:
+    src: backup.sh.j2
+    dest: ~{{ postgres_backup_operator_username }}/bin/backup_{{ item.host }}_{{ item.port }}.sh
+    owner: "{{ postgres_backup_operator_username }}"
+    group: "{{ postgres_backup_operator_username }}"
+    mode: "700"
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.borg_repository }}"
+
+- name: Setup cronjobs to run pg_basebackup for each cluster
+  cron:
+    name: Take base backup of the {{ item.host }}:{{ item.port }} PostgreSQL cluster
+    user: "{{ postgres_backup_operator_username }}"
+    month: "{{ item.cron_month|default(omit) }}"
+    weekday: "{{ item.cron_weekday|default(omit) }}"
+    day: "{{ item.cron_day|default(omit) }}"
+    hour: "{{ item.cron_hour|default(omit) }}"
+    minute: "{{ item.cron_minute|default(omit) }}"
+    job: chronic ~/bin/backup_{{ item.host }}_{{ item.port }}.sh
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.borg_repository }}"

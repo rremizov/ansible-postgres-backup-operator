@@ -1,0 +1,42 @@
+#jinja2: lstrip_blocks: True
+#!/bin/bash
+
+set -e
+
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+export BORG_PASSPHRASE={{ item.borg_passphrase }}
+
+set -x
+
+tmp_dir=~/tmp/{{ item.host }}_{{ item.port }}/
+
+function on_exit {
+    rm -r "$tmp_dir"
+}
+trap on_exit EXIT
+
+pg_basebackup \
+    --pgdata "$tmp_dir" \
+    --max-rate {{ item.max_rate }} \
+    -X stream \
+    --host {{ item.host }} \
+    --port {{ item.port }} \
+    --username {{ item.username }}
+borg create -v --stats {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} "$tmp_dir"
+borg prune --list --stats -v \
+    {% if item.retention_hourly is defined %}
+    --keep-hourly={{ item.retention_hourly }} \
+    {% endif %}
+    {% if item.retention_daily is defined %}
+    --keep-daily={{ item.retention_daily }} \
+    {% endif %}
+    {% if item.retention_weekly is defined %}
+    --keep-weekly={{ item.retention_weekly }} \
+    {% endif %}
+    {% if item.retention_monthly is defined %}
+    --keep-monthly={{ item.retention_monthly }} \
+    {% endif %}
+    {% if item.retention_yearly is defined %}
+    --keep-yearly={{ item.retention_yearly }} \
+    {% endif %}
+    {{ item.borg_repository }}
