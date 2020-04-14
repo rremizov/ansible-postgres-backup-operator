@@ -51,8 +51,12 @@
 
 - name: Create absent borg repositories
   shell: >
+    {% if item.item.borg_passphrase is defined %}
     BORG_PASSPHRASE={{ item.item.borg_passphrase }}
     borg init --encryption repokey {{ item.item.borg_repository }}
+    {% else %}
+    borg init --encryption none {{ item.item.borg_repository }}
+    {% endif %}
   when: not item.stat.exists
   with_items: "{{ repositories_stat.results }}"
   loop_control:

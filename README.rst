@@ -44,7 +44,7 @@ Configure the backup host
         password: password # BEWARE! Stored in plain text in the ~/.pgpass file!
         max_rate: 8M # Used as is in the "pg_basebackup --max-rate" option.
         borg_repository: /var/backups/postgres/1.2.3.4:5432/ # Path to the borg repository.
-        borg_passphrase: passphrase # BEWARE! Stored in plain text in the backup script!
+        borg_passphrase: passphrase # BEWARE! Stored in plain text in the backup script! Optional.
         cron_month: "*"
         cron_weekday: "*"
         cron_day: "*"

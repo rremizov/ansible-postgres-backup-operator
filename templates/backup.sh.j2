@@ -3,8 +3,10 @@
 
 set -e
 
+{% if item.borg_passphrase is defined %}
 export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 export BORG_PASSPHRASE={{ item.borg_passphrase }}
+{% endif %}
 
 set -x
 
