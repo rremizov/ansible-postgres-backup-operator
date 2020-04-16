@@ -10,7 +10,7 @@ export BORG_PASSPHRASE={{ item.borg_passphrase }}
 
 set -x
 
-tmp_dir=~/tmp/{{ item.host }}_{{ item.port }}/
+tmp_dir={{ item.tmp_backup_path }}/{{ item.host }}_{{ item.port }}/
 
 function on_exit {
     rm -r "$tmp_dir"

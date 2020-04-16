@@ -29,6 +29,17 @@
     group: "{{ postgres_backup_operator_username }}"
     mode: "0600"
 
+- name: Create temporary directories
+  file:
+    path: "{{ item.tmp_backup_path }}"
+    state: directory
+    owner: "{{ postgres_backup_operator_username }}"
+    group: root
+    mode: "0750"
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.tmp_backup_path }}"
+
 - name: Check if borg repositories exist
   stat:
     path: "{{ item.borg_repository }}"

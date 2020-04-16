@@ -43,6 +43,7 @@ Configure the backup host
         username: postgres_backup_operator # PostgreSQL user to connect as.
         password: password # BEWARE! Stored in plain text in the ~/.pgpass file!
         max_rate: 8M # Used as is in the "pg_basebackup --max-rate" option.
+        tmp_backup_path: /var/backups/postgres/tmp/ # Temporary directory. Space enough for one backup is required.
         borg_repository: /var/backups/postgres/1.2.3.4:5432/ # Path to the borg repository.
         borg_passphrase: passphrase # BEWARE! Stored in plain text in the backup script! Optional.
         cron_month: "*"
