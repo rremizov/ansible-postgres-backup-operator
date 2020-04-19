@@ -108,7 +108,9 @@
     day: "{{ item.cron_day|default(omit) }}"
     hour: "{{ item.cron_hour|default(omit) }}"
     minute: "{{ item.cron_minute|default(omit) }}"
-    job: chronic ~/bin/backup_{{ item.host }}_{{ item.port }}.sh
+    job: >
+      {% if item.supress_mail_on_success|default(True) %}chronic{% endif %}
+      ~/bin/backup_{{ item.host }}_{{ item.port }}.sh
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
     label: "{{ item.borg_repository }}"

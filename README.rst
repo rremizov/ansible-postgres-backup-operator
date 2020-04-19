@@ -51,6 +51,7 @@ Configure the backup host
         cron_day: "*"
         cron_hour: "0"
         cron_minute: "0"
+        supress_mail_on_success: no # Use chronic to supress unwanted mail from cron. Default: yes.
         retention_hourly: 24 # Number of hourly archives to keep.
         retention_daily: 30 # Number of daily archives to keep.
         retention_weekly: 12 # Number of weekly archives to keep.
