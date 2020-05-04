@@ -34,7 +34,7 @@
     path: "{{ item.tmp_backup_path }}"
     state: directory
     owner: "{{ postgres_backup_operator_username }}"
-    group: root
+    group: "{{ postgres_backup_operator_username }}"
     mode: "0750"
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
@@ -53,7 +53,7 @@
     path: "{{ item.item.borg_repository }}"
     state: directory
     owner: "{{ postgres_backup_operator_username }}"
-    group: root
+    group: "{{ postgres_backup_operator_username }}"
     mode: "0750"
   when: not item.stat.exists
   with_items: "{{ repositories_stat.results }}"
