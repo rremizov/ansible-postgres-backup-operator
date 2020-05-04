@@ -7,7 +7,7 @@
     packages:
       - borgbackup
       - moreutils # chronic
-      - postgresql # pg_basebackup
+      - postgresql-client # pg_basebackup
 
 - name: Create group
   group:
