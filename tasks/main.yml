@@ -87,6 +87,9 @@
   file:
     path: "~{{ postgres_backup_operator_username }}/bin"
     state: directory
+    owner: "{{ postgres_backup_operator_username }}"
+    group: "{{ postgres_backup_operator_username }}"
+    mode: "0750"
 
 - name: Install backup scripts
   template:
