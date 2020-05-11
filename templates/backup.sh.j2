@@ -26,6 +26,9 @@ pg_basebackup \
     --username {{ item.username }}
 borg create -v --stats {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} "$tmp_dir"
 borg prune --list --stats -v \
+    {% if item.retention_within is defined %}
+    --keep-within={{ item.retention_within }} \
+    {% endif %}
     {% if item.retention_hourly is defined %}
     --keep-hourly={{ item.retention_hourly }} \
     {% endif %}
