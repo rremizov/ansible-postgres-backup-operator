@@ -112,7 +112,7 @@
     hour: "{{ item.cron_hour|default(omit) }}"
     minute: "{{ item.cron_minute|default(omit) }}"
     job: >
-      {% if item.supress_mail_on_success|default(True) %}chronic{% endif %}
+      {% if item.suppress_mail_on_success|default(True) %}chronic{% endif %}
       ~/bin/backup_{{ item.host }}_{{ item.port }}.sh
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
