@@ -45,3 +45,5 @@ borg prune --list --stats -v \
     --keep-yearly={{ item.retention_yearly }} \
     {% endif %}
     {{ item.borg_repository }}
+
+{{ item.post_backup_hook|default('') }}
