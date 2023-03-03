@@ -42,8 +42,8 @@ Configure the backup host
         port: 5432
         username: postgres_backup_operator # PostgreSQL user to connect as.
         password: password # BEWARE! Stored in plain text in the ~/.pgpass file!
+        backup_type: "physical" # "physical" or "logical"
         max_rate: 8M # Used as is in the "pg_basebackup --max-rate" option.
-        tmp_backup_path: /var/backups/postgres/tmp/ # Temporary directory. Space enough for one backup is required.
         borg_repository: /var/backups/postgres/1.2.3.4:5432/ # Path to the borg repository.
         borg_passphrase: passphrase # BEWARE! Stored in plain text in the backup script! Optional.
         cron_month: "*"
@@ -70,7 +70,9 @@ Use the `geerlingguy.postgresql`_ role to create a user and pg_hba.conf entry fo
     postgresql_users:
       - name: postgres_backup_operator
         password: password
-        role_attr_flags: LOGIN,REPLICATION # REPLICATION is required by the pg_basebackup utility.
+        # REPLICATION is required by the pg_basebackup utility.
+        # SUPERUSER is required by the pg_dumpall utility.
+        role_attr_flags: LOGIN,REPLICATION,SUPERUSER
         state: present
 
     postgresql_hba_entries:

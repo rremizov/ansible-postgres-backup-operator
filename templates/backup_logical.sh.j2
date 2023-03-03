@@ -10,21 +10,12 @@ export BORG_PASSPHRASE={{ item.borg_passphrase }}
 
 set -x
 
-tmp_dir={{ item.tmp_backup_path }}/{{ item.host }}_{{ item.port }}/
-
-function on_exit {
-    rm -r "$tmp_dir"
-}
-trap on_exit EXIT
-
-pg_basebackup \
-    --pgdata "$tmp_dir" \
-    --max-rate {{ item.max_rate }} \
-    -X stream \
+pg_dumpall \
     --host {{ item.host }} \
     --port {{ item.port }} \
-    --username {{ item.username }}
-borg create -v --stats {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} "$tmp_dir"
+    --username {{ item.username }} \
+    | bzip2 \
+    | borg create -v --stats --stdin-name=dump.sql.bz {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} -
 borg prune --list --stats -v \
     {% if item.retention_within is defined %}
     --keep-within={{ item.retention_within }} \

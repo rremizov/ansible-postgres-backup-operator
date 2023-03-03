@@ -7,7 +7,7 @@
     packages:
       - borgbackup
       - moreutils # chronic
-      - postgresql-client # pg_basebackup
+      - postgresql-client # pg_basebackup, pg_dumpall
 
 - name: Create group
   group:
@@ -28,17 +28,6 @@
     owner: "{{ postgres_backup_operator_username }}"
     group: "{{ postgres_backup_operator_username }}"
     mode: "0600"
-
-- name: Create temporary directories
-  file:
-    path: "{{ item.tmp_backup_path }}"
-    state: directory
-    owner: "{{ postgres_backup_operator_username }}"
-    group: "{{ postgres_backup_operator_username }}"
-    mode: "0750"
-  with_items: "{{ postgres_backup_operator_clusters }}"
-  loop_control:
-    label: "{{ item.tmp_backup_path }}"
 
 - name: Check if borg repositories exist
   stat:
@@ -91,10 +80,18 @@
     group: "{{ postgres_backup_operator_username }}"
     mode: "0750"
 
+- name: Remove old backup scripts
+  file:
+    path: ~{{ postgres_backup_operator_username }}/bin/backup_{{ item.host }}_{{ item.port }}.sh
+    state: absent
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.borg_repository }}"
+
 - name: Install backup scripts
   template:
-    src: backup.sh.j2
-    dest: ~{{ postgres_backup_operator_username }}/bin/backup_{{ item.host }}_{{ item.port }}.sh
+    src: backup_{{ item.backup_type }}.sh.j2
+    dest: ~{{ postgres_backup_operator_username }}/bin/backup_{{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository)|hash('md5') }}.sh
     owner: "{{ postgres_backup_operator_username }}"
     group: "{{ postgres_backup_operator_username }}"
     mode: "700"
@@ -102,7 +99,7 @@
   loop_control:
     label: "{{ item.borg_repository }}"
 
-- name: Setup cronjobs to run pg_basebackup for each cluster
+- name: Remove old cronjobs
   cron:
     name: Take base backup of the {{ item.host }}:{{ item.port }} PostgreSQL cluster
     user: "{{ postgres_backup_operator_username }}"
@@ -114,6 +111,23 @@
     job: >
       {% if item.suppress_mail_on_success|default(True) %}chronic{% endif %}
       ~/bin/backup_{{ item.host }}_{{ item.port }}.sh
+    state: absent
+  with_items: "{{ postgres_backup_operator_clusters }}"
+  loop_control:
+    label: "{{ item.borg_repository }}"
+
+- name: Setup cronjobs
+  cron:
+    name: Create {{ item.backup_type }} backup of the {{ item.host }}:{{ item.port }} PostgreSQL cluster, {{ item.borg_repository|hash('md5') }}
+    user: "{{ postgres_backup_operator_username }}"
+    month: "{{ item.cron_month|default(omit) }}"
+    weekday: "{{ item.cron_weekday|default(omit) }}"
+    day: "{{ item.cron_day|default(omit) }}"
+    hour: "{{ item.cron_hour|default(omit) }}"
+    minute: "{{ item.cron_minute|default(omit) }}"
+    job: >
+      {% if item.suppress_mail_on_success|default(True) %}chronic{% endif %}
+      ~/bin/backup_{{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository)|hash('md5') }}.sh
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
     label: "{{ item.borg_repository }}"
