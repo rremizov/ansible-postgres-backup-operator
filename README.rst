@@ -90,4 +90,5 @@ Use the `geerlingguy.postgresql`_ role to create a user and pg_hba.conf entry fo
 
 .. _geerlingguy.postgresql: https://github.com/geerlingguy/ansible-role-postgresql
 .. _BorgBackup: https://github.com/borgbackup
-.. _pg_basebackup: https://www.postgresql.org/docs/10/app-pgbasebackup.html
+.. _pg_basebackup: https://www.postgresql.org/docs/12/app-pgbasebackup.html
+.. _pg_dumpall: https://www.postgresql.org/docs/12/app-pg-dumpall.html
