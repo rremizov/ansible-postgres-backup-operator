@@ -9,6 +9,7 @@ Features
 --------
 
 - Uses `pg_basebackup`_ utility to take binary backups.
+- Uses `pg_dumpall`_ utility to take logical backups.
 - Uses `BorgBackup`_ to create versioned, deduplicated and encrypted backups.
 
 Requirements
@@ -28,6 +29,11 @@ Linux username.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 List of the PostgreSQL clusters to backup. See the schema in the examples below.
+
+``postgres_backup_operator_tmp_dir``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Path to a directory for the temporary files.
 
 Example
 -------
