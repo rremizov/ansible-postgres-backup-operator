@@ -52,6 +52,7 @@ Configure the backup host
         max_rate: 8M # Used as is in the "pg_basebackup --max-rate" option.
         borg_repository: /var/backups/postgres/1.2.3.4:5432/ # Path to the borg repository.
         borg_passphrase: passphrase # BEWARE! Stored in plain text in the backup script! Optional.
+        borg_umask: "0027" # Default: "0077"
         cron_month: "*"
         cron_weekday: "*"
         cron_day: "*"

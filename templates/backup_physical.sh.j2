@@ -24,7 +24,12 @@ pg_basebackup \
     --host {{ item.host }} \
     --port {{ item.port }} \
     --username {{ item.username }}
-borg create -v --stats {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} "$tmp_dir"
+
+borg create -v --stats \
+ --umask {{ item.borg_umask|default("0077") }} \
+ {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} \
+ "$tmp_dir"
+
 borg prune --list --stats -v \
     {% if item.retention_within is defined %}
     --keep-within={{ item.retention_within }} \

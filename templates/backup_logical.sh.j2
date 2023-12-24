@@ -15,7 +15,8 @@ pg_dumpall \
     --port {{ item.port }} \
     --username {{ item.username }} \
     | bzip2 \
-    | borg create -v --stats --stdin-name=dump.sql.bz {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} -
+    | borg create -v --stats --umask {{ item.borg_umask|default("0077") }} --stdin-name=dump.sql.bz {{ item.borg_repository }}::{{ '{utcnow}-{borgversion}' }} -
+
 borg prune --list --stats -v \
     {% if item.retention_within is defined %}
     --keep-within={{ item.retention_within }} \
