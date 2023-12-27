@@ -31,6 +31,7 @@ borg create -v --stats \
  "$tmp_dir"
 
 borg prune --list --stats -v \
+    --umask {{ item.borg_umask|default("0077") }} \
     {% if item.retention_within is defined %}
     --keep-within={{ item.retention_within }} \
     {% endif %}
