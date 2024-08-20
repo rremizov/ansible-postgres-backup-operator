@@ -52,4 +52,6 @@ borg prune --list --stats -v \
     {% endif %}
     {{ item.borg_repository }}
 
+borg compact --cleanup-commits {{ item.borg_repository }}
+
 {{ item.post_backup_hook|default('') }}
