@@ -1,15 +1,15 @@
+---
 galaxy_info:
   role_name: postgres_backup_operator
   author: rremizov
   description: Create and store PostgreSQL backups.
   license: MIT
-  min_ansible_version: 2.8
+  min_ansible_version: "2.8"
 
   platforms:
     - name: Debian
       versions:
-        - 9
-        - 10
+        - all
 
   galaxy_tags:
     - backup

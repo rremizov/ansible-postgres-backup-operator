@@ -58,16 +58,22 @@
     borg init --encryption none {{ item.item.borg_repository }}
     {% endif %}
   when: not item.stat.exists
+  changed_when: not item.stat.exists
   with_items: "{{ repositories_stat.results }}"
   loop_control:
     label: "{{ item.item.borg_repository }}"
 
 - name: Fix permissions of the created repositories
   shell: |
-    chown -R {{ postgres_backup_operator_username }}:{{ postgres_backup_operator_username }} {{ item.item.borg_repository }}
+    set -o pipefail
+    chown -R {{ postgres_backup_operator_username }}:{{ postgres_backup_operator_username }} \
+      {{ item.item.borg_repository }}
     find {{ item.item.borg_repository }} -type d -print0 | xargs -0 chmod 770
     find {{ item.item.borg_repository }} -type f -print0 | xargs -0 chmod 660
+  args:
+    executable: /bin/bash
   when: not item.stat.exists
+  changed_when: not item.stat.exists
   with_items: "{{ repositories_stat.results }}"
   loop_control:
     label: "{{ item.item.borg_repository }}"
@@ -91,10 +97,13 @@
 - name: Install backup scripts
   template:
     src: backup_{{ item.backup_type }}.sh.j2
-    dest: ~{{ postgres_backup_operator_username }}/bin/backup_{{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository)|hash('md5') }}.sh
+    dest: ~{{ postgres_backup_operator_username }}/bin/backup_{{ backup_script_hash }}.sh
     owner: "{{ postgres_backup_operator_username }}"
     group: "{{ postgres_backup_operator_username }}"
     mode: "700"
+  vars:
+    backup_script_hash: >-
+      {{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository) | hash('md5') }}
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
     label: "{{ item.borg_repository }}"
@@ -118,7 +127,7 @@
 
 - name: Setup cronjobs
   cron:
-    name: Create {{ item.backup_type }} backup of the {{ item.host }}:{{ item.port }} PostgreSQL cluster, {{ item.borg_repository|hash('md5') }}
+    name: "{{ cron_name }}"
     user: "{{ postgres_backup_operator_username }}"
     month: "{{ item.cron_month|default(omit) }}"
     weekday: "{{ item.cron_weekday|default(omit) }}"
@@ -127,7 +136,13 @@
     minute: "{{ item.cron_minute|default(omit) }}"
     job: >
       {% if item.suppress_mail_on_success|default(True) %}chronic{% endif %}
-      ~/bin/backup_{{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository)|hash('md5') }}.sh
+      ~/bin/backup_{{ backup_script_hash }}.sh
+  vars:
+    cron_name: >-
+      Create {{ item.backup_type }} backup of the {{ item.host }}:{{ item.port }}
+      PostgreSQL cluster, {{ item.borg_repository | hash('md5') }}
+    backup_script_hash: >-
+      {{ (item.host ~ item.port ~ item.backup_type ~ item.borg_repository) | hash('md5') }}
   with_items: "{{ postgres_backup_operator_clusters }}"
   loop_control:
     label: "{{ item.borg_repository }}"
